@@ -1,0 +1,55 @@
+.game-settings {
+  min-width: 300px;
+}
+
+.settings-title {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.settings-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.cursor-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.cursor-button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid #242424;
+  background: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.cursor-button:hover:not(:disabled) {
+  background-color: #242424;
+  color: white;
+}
+
+.cursor-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cursor-value {
+  font-size: 1.2rem;
+  min-width: 2rem;
+  text-align: center;
+}

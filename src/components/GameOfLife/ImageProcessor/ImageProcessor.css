@@ -1,0 +1,27 @@
+.file-input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.preview-container {
+  max-width: 300px;
+  max-height: 300px;
+  overflow: hidden;
+  margin: 0 auto;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+
+.preview-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .preview-container {
+    max-width: 400px;
+    max-height: 400px;
+  }
+}

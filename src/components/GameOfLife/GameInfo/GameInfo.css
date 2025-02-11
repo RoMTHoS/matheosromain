@@ -1,0 +1,31 @@
+.game-info-generation {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.15rem;
+  color: white;
+  top: 0.5rem;
+  left: 0.5rem;
+  background-color: #242424bd;
+  font-size: 1.15rem;
+  z-index: 1000;
+}
+
+.game-info-button {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: #242424bd;
+  color: white;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+
+/*Tablet and up*/
+@media (min-width: 768px) {
+  .game-info-button:hover {
+    transform: scale(1.1);
+  }
+}
