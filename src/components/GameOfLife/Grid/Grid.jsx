@@ -32,7 +32,7 @@ export default function Grid({ grid, setGrid, cursorSize }) {
     } else if (width <= 1024) {
       columns = 90;
     } else {
-      columns = 180;
+      columns = 160;
     }
 
     // Calculate exact cell size
@@ -92,7 +92,7 @@ export default function Grid({ grid, setGrid, cursorSize }) {
 
       grid.forEach((row, rowIndex) => {
         row.forEach((cell, colIndex) => {
-          ctx.fillStyle = cell === 1 ? "#ffffffde" : "#242424";
+          ctx.fillStyle = cell === 1 ? "#FFF" : "#151619";
           ctx.fillRect(
             colIndex * cellSize,
             rowIndex * cellSize,
@@ -100,7 +100,7 @@ export default function Grid({ grid, setGrid, cursorSize }) {
             cellSize
           );
 
-          ctx.strokeStyle = cell === 1 ? "#242424" : "#ffffffde";
+          ctx.strokeStyle = cell === 1 ? "#151619" : "#FFF";
           ctx.lineWidth = 1;
           ctx.strokeRect(
             colIndex * cellSize,

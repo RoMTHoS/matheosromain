@@ -1,6 +1,41 @@
 .game-container {
   width: 100%;
   height: 100%;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+.game-ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none; /* Allow clicks to pass through to grid */
+}
+
+/* Game UI elements need pointer events to work */
+.game-ui > * {
+  pointer-events: auto;
+}
+
+/* Visibility transitions */
+.game-ui {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.game-ui.visible {
+  opacity: 1;
+}
+
+.game-ui.hidden {
+  opacity: 0;
+}
+
+/* Keep modal visible always */
+.modal-overlay {
+  opacity: 1 !important;
 }

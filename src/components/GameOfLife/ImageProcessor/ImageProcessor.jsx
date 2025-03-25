@@ -33,7 +33,7 @@ const ImageProcessor = ({ onImageProcessed, gridColumns, gridRows }) => {
       const y = (canvas.height - img.height * scale) / 2;
 
       // Clear and draw resized image
-      ctx.fillStyle = "#FFFFFF";
+      ctx.fillStyle = "#e7e7e7";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
@@ -64,6 +64,7 @@ const ImageProcessor = ({ onImageProcessed, gridColumns, gridRows }) => {
         );
 
       onImageProcessed(grid);
+      console.log(grid);
     };
   };
 
@@ -82,11 +83,11 @@ const ImageProcessor = ({ onImageProcessed, gridColumns, gridRows }) => {
         onChange={handleFileChange}
         className="file-input"
       />
-      {preview && (
+      {/* {preview && (
         <div className="preview-container">
           <img src={preview} alt="Processed" className="preview-image" />
         </div>
-      )}
+      )} */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
     </>
   );

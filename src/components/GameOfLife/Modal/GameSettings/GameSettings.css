@@ -9,7 +9,9 @@
 }
 
 .settings-section {
+  display: flex;
   margin-bottom: 2rem;
+  flex-direction: column;
 }
 
 .settings-section h3 {
@@ -19,14 +21,19 @@
 
 .cursor-controls {
   display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 1rem;
 }
 
+.cursor-controls-buttons {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  margin: 0 1rem;
+}
+
 .cursor-button {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border: 1px solid #242424;
   background: none;
   border-radius: 50%;
@@ -52,4 +59,42 @@
   font-size: 1.2rem;
   min-width: 2rem;
   text-align: center;
+}
+
+.pattern-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pattern-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #242424;
+  background: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pattern-button:hover {
+  background-color: #242424;
+  color: white;
+}
+
+.text-error {
+  color: #e53935;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.text-info {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.text-pattern-form {
+  display: flex;
+  gap: 1em;
 }
