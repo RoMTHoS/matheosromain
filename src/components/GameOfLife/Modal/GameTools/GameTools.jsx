@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ImageProcessor from "../../ImageProcessor/ImageProcessor";
 import alphabetPatterns from "../../../../utils/alphabetPattern.json";
-import "./GameSettings.css";
+import "./GameTools.css";
 
 // Function to convert text to pattern
 const textToPattern = (text) => {
@@ -52,12 +52,10 @@ const textToPattern = (text) => {
     }
   });
 
-  console.log(result);
-
   return result;
 };
 
-const GameSettings = ({
+const GameTools = ({
   onImageProcessed,
   cursorSize,
   onCursorSizeChange,
@@ -93,16 +91,16 @@ const GameSettings = ({
     if (textPattern.length > 0 && textPattern[0].length > 0) {
       onPatternSelect(textPattern);
     }
-  };
 
-  console.log(Object.keys(patterns));
+    console.log(JSON.stringify(textPattern));
+  };
 
   return (
     <div className="game-settings">
-      <h2 className="settings-title">Game Settings</h2>
+      <h2 className="settings-title">Game Tools</h2>
 
       <div className="settings-section">
-        <h3>Upload Image</h3>
+        <h3>Upload an image and make it alive</h3>
         <ImageProcessor
           onImageProcessed={onImageProcessed}
           gridColumns={gridColumns}
@@ -115,7 +113,7 @@ const GameSettings = ({
           <h3>Cursor Size</h3>
           <div className="cursor-controls-buttons">
             <button
-              onClick={() => onCursorSizeChange(Math.max(1, cursorSize - 2))}
+              onClick={() => onCursorSizeChange(Math.max(1, cursorSize - 1))}
               className="cursor-button"
               disabled={cursorSize <= 1}
             >
@@ -123,7 +121,7 @@ const GameSettings = ({
             </button>
             <span className="cursor-value">{cursorSize}</span>
             <button
-              onClick={() => onCursorSizeChange(cursorSize + 2)}
+              onClick={() => onCursorSizeChange(cursorSize + 1)}
               className="cursor-button"
             >
               +
@@ -133,13 +131,13 @@ const GameSettings = ({
       </div>
 
       <div className="settings-section">
-        <h3>Text Pattern</h3>
+        <h3>Bring any text to life</h3>
         <form onSubmit={handleTextSubmit} className="text-pattern-form">
           <input
             type="text"
             value={customText}
             onChange={(e) => setCustomText(e.target.value)}
-            placeholder="Enter text..."
+            placeholder=" Enter text..."
             className="text-input"
           />
           <button type="submit" className="text-submit-btn">
@@ -150,7 +148,7 @@ const GameSettings = ({
       </div>
 
       <div className="settings-section">
-        <h3>Preset Patterns</h3>
+        <h3>Game of Life famous patterns</h3>
         <div className="pattern-selector">
           {patterns &&
             patterns.map((pattern) => (
@@ -168,4 +166,4 @@ const GameSettings = ({
   );
 };
 
-export default GameSettings;
+export default GameTools;

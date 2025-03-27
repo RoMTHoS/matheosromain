@@ -48,6 +48,13 @@
   opacity: 0;
 }
 
+/* Keep game UI visible on hover */
+.game-ui:hover,
+.game-ui.game-running,
+.game-ui.ui-active {
+  opacity: 1 !important;
+}
+
 /* Keep modal visible always */
 .modal-overlay {
   opacity: 1 !important;

@@ -1,11 +1,18 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
-export default function Grid({ grid, setGrid, cursorSize }) {
+export default function Grid({
+  grid,
+  setGrid,
+  cursorSize,
+  isGameRunning,
+  setUiActivated,
+}) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [initialCellState, setInitialCellState] = useState(null);
+  const [uiActive, setUiActive] = useState(false);
   const [dimensions, setDimensions] = useState({
     width: 0,
     height: 0,
@@ -232,6 +239,13 @@ export default function Grid({ grid, setGrid, cursorSize }) {
     (e) => {
       e.preventDefault();
 
+      // If UI is not yet active, just activate UI and don't start drawing
+      if (!uiActive) {
+        setUiActive(true);
+        setUiActivated(true); // This should be passed from parent component
+        return;
+      }
+
       const x = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
       const y = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
 
@@ -247,7 +261,7 @@ export default function Grid({ grid, setGrid, cursorSize }) {
         applyCursor(row, col, state);
       }
     },
-    [grid, screenToGrid, applyCursor]
+    [grid, screenToGrid, applyCursor, uiActive, setUiActivated]
   );
 
   // Draw line using Bresenham algorithm

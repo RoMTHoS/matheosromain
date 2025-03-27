@@ -3,9 +3,11 @@ import Grid from "./Grid/Grid";
 import GameControls from "./GameControls/GameControls";
 import GameInfo from "./GameInfo/GameInfo";
 import Modal from "./Modal/Modal";
-import GameSettings from "./Modal/GameSettings/GameSettings";
+import GameTools from "./Modal/GameTools/GameTools";
 import patterns from "../../utils/golPatterns.json";
-import devicePatterns from "../../utils/devicePatterns.json";
+import mobilePatterns from "../../utils/mobilePattern.json";
+import tabletPatterns from "../../utils/tabletPattern.json";
+import desktopPatterns from "../../utils/desktopPattern.json";
 import "./GameOfLife.css";
 
 export default function GameOfLife() {
@@ -20,6 +22,7 @@ export default function GameOfLife() {
   const [controlsVisible, setControlsVisible] = useState(false);
   const hideTimeoutRef = useRef(null);
   const simulationRef = useRef(null);
+  const [uiActive, setUiActive] = useState(false);
 
   // Memoize the calculation of grid dimensions
   const calculateDimensions = useMemo(() => {
@@ -63,8 +66,17 @@ export default function GameOfLife() {
         pattern = patternNameOrArray;
       } else {
         // Pattern name from configuration
-        pattern =
-          devicePatterns[patternNameOrArray] || patterns[patternNameOrArray];
+        // Check in the appropriate pattern file based on the name
+        pattern = patterns[patternNameOrArray];
+
+        // If it's a device-specific pattern name, use the corresponding pattern
+        if (patternNameOrArray === "mobile") {
+          pattern = mobilePatterns.mobile;
+        } else if (patternNameOrArray === "tablet") {
+          pattern = tabletPatterns.tablet;
+        } else if (patternNameOrArray === "desktop") {
+          pattern = desktopPatterns.desktop;
+        }
 
         // If pattern not found, return empty grid
         if (!pattern) {
@@ -72,28 +84,52 @@ export default function GameOfLife() {
         }
       }
 
-      // Calculate pattern dimensions
+      // Calculate maximum pattern dimensions
       const patternRows = pattern.length;
-      const patternCols = pattern[0].length;
+
+      // Find the longest row length in the pattern
+      let patternCols = 0;
+      for (let i = 0; i < pattern.length; i++) {
+        patternCols = Math.max(patternCols, pattern[i].length);
+      }
+
+      console.log(
+        `Pattern dimensions: ${patternRows} rows × ${patternCols} columns`
+      );
 
       // Ensure we have enough rows for the pattern
-      const neededRows = Math.max(rows, patternRows + 10); // Add padding
+      const neededRows = Math.max(rows, patternRows);
 
       // Create empty grid with needed dimensions
       const emptyGrid = Array(neededRows)
         .fill()
         .map(() => Array(columns).fill(0));
 
-      // Calculate center positions for the pattern
+      // Calculate vertical center position
       const startRow = Math.floor((neededRows - patternRows) / 2);
-      const startCol = Math.floor((columns - patternCols) / 2);
 
       // Place the pattern in the center of the grid
       for (let row = 0; row < patternRows; row++) {
-        for (let col = 0; col < patternCols; col++) {
+        // Get the current row from the pattern
+        const patternRow = pattern[row];
+        const currentRowLength = patternRow.length;
+
+        // Calculate horizontal center position for this specific row
+        const rowStartCol = Math.floor((columns - currentRowLength) / 2);
+
+        for (let col = 0; col < currentRowLength; col++) {
           const gridRow = (startRow + row + neededRows) % neededRows;
-          const gridCol = (startCol + col + columns) % columns;
-          emptyGrid[gridRow][gridCol] = pattern[row][col];
+          const gridCol = (rowStartCol + col + columns) % columns;
+
+          // Make sure we don't go out of bounds
+          if (
+            gridRow >= 0 &&
+            gridRow < emptyGrid.length &&
+            gridCol >= 0 &&
+            gridCol < emptyGrid[0].length
+          ) {
+            emptyGrid[gridRow][gridCol] = patternRow[col];
+          }
         }
       }
 
@@ -105,7 +141,6 @@ export default function GameOfLife() {
     },
     [calculateDimensions, createEmptyGrid]
   );
-
   // Handle screen resize
   useEffect(() => {
     const handleResize = () => {
@@ -292,7 +327,11 @@ export default function GameOfLife() {
       onClick={handleContainerClick}
       onTouchStart={handleContainerClick}
     >
-      <div className={`game-ui ${controlsVisible ? "visible" : "hidden"}`}>
+      <div
+        className={`game-ui ${uiActive ? "ui-active" : ""} ${
+          isRunning ? "game-running" : ""
+        }`}
+      >
         <GameInfo generation={generation} />
         <GameControls
           isRunning={isRunning}
@@ -306,10 +345,16 @@ export default function GameOfLife() {
         />
       </div>
 
-      <Grid grid={grid} setGrid={handleGridChange} cursorSize={cursorSize} />
+      <Grid
+        grid={grid}
+        setGrid={handleGridChange}
+        cursorSize={cursorSize}
+        isGameRunning={isRunning}
+        setUiActivated={setUiActive}
+      />
 
       <Modal isOpen={showSettings} onClose={() => setShowSettings(false)}>
-        <GameSettings
+        <GameTools
           onImageProcessed={(processedGrid) => {
             handleImageProcessed(processedGrid);
             setShowSettings(false);
