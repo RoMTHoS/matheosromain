@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Grid from "./Grid/Grid";
 import GameControls from "./GameControls/GameControls";
 import GameInfo from "./GameInfo/GameInfo";
 import Modal from "./Modal/Modal";
 import GameSettings from "./Modal/GameSettings/GameSettings";
-import patterns from "../../utils/golPatterns.json"; // Import patterns configuration
-import devicePatterns from "../../utils/devicePatterns.json"; // Import patterns configuration
-import "./GameOfLife.css"; // Make sure to create this CSS file
+import patterns from "../../utils/golPatterns.json";
+import devicePatterns from "../../utils/devicePatterns.json";
+import "./GameOfLife.css";
 
 export default function GameOfLife() {
   const [grid, setGrid] = useState([]);
@@ -19,28 +19,31 @@ export default function GameOfLife() {
   const [showSettings, setShowSettings] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(false);
   const hideTimeoutRef = useRef(null);
+  const simulationRef = useRef(null);
 
-  // Calculate grid dimensions
-  const calculateDimensions = useCallback(() => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+  // Memoize the calculation of grid dimensions
+  const calculateDimensions = useMemo(() => {
+    return () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-    let columns;
-    if (width <= 480) {
-      columns = 70;
-    } else if (width <= 1024) {
-      columns = 90;
-    } else {
-      columns = 160;
-    }
+      let columns;
+      if (width <= 480) {
+        columns = 70;
+      } else if (width <= 1024) {
+        columns = 90;
+      } else {
+        columns = 160;
+      }
 
-    const cellSize = width / columns;
-    const rows = Math.ceil(height / cellSize);
+      const cellSize = width / columns;
+      const rows = Math.ceil(height / cellSize);
 
-    return { columns, rows, cellSize };
+      return { columns, rows, cellSize };
+    };
   }, []);
 
-  // Get empty grid with correct dimensions
+  // Create an empty grid
   const createEmptyGrid = useCallback(() => {
     const { columns, rows } = calculateDimensions();
     return Array(rows)
@@ -48,56 +51,40 @@ export default function GameOfLife() {
       .map(() => Array(columns).fill(0));
   }, [calculateDimensions]);
 
-  // Update the loadCenteredPattern function in GameOfLife.jsx
-  const loadCenteredPattern = useCallback(
-    (patternName) => {
+  // Load specific pattern
+  const loadPattern = useCallback(
+    (patternNameOrArray) => {
       const { columns, rows } = calculateDimensions();
+      let pattern;
 
-      // Get the pattern from patterns configuration
-      const pattern = devicePatterns[patternName];
-      if (!pattern) {
-        // If pattern not found, try the regular patterns object
-        const altPattern = patterns[patternName];
-        if (!altPattern) {
-          return Array(rows)
-            .fill()
-            .map(() => Array(columns).fill(0));
+      // Determine the pattern source
+      if (Array.isArray(patternNameOrArray)) {
+        // Direct pattern array
+        pattern = patternNameOrArray;
+      } else {
+        // Pattern name from configuration
+        pattern =
+          devicePatterns[patternNameOrArray] || patterns[patternNameOrArray];
+
+        // If pattern not found, return empty grid
+        if (!pattern) {
+          return setGrid(createEmptyGrid());
         }
-
-        // Calculate minimum rows needed to accommodate the pattern
-        const patternRows = altPattern.length;
-        const neededRows = Math.max(rows, patternRows + 10); // Add padding
-
-        const emptyGrid = Array(neededRows)
-          .fill()
-          .map(() => Array(columns).fill(0));
-
-        // Calculate center positions
-        const patternCols = altPattern[0].length;
-        const startRow = Math.floor((neededRows - patternRows) / 2);
-        const startCol = Math.floor((columns - patternCols) / 2);
-
-        // Place the pattern in the center of the grid
-        for (let row = 0; row < patternRows; row++) {
-          for (let col = 0; col < patternCols; col++) {
-            const gridRow = (startRow + row + neededRows) % neededRows;
-            const gridCol = (startCol + col + columns) % columns;
-            emptyGrid[gridRow][gridCol] = altPattern[row][col];
-          }
-        }
-
-        return emptyGrid;
       }
 
-      // Handle device patterns (original logic)
+      // Calculate pattern dimensions
       const patternRows = pattern.length;
       const patternCols = pattern[0].length;
-      const neededRows = Math.max(rows, patternRows + 10);
 
+      // Ensure we have enough rows for the pattern
+      const neededRows = Math.max(rows, patternRows + 10); // Add padding
+
+      // Create empty grid with needed dimensions
       const emptyGrid = Array(neededRows)
         .fill()
         .map(() => Array(columns).fill(0));
 
+      // Calculate center positions for the pattern
       const startRow = Math.floor((neededRows - patternRows) / 2);
       const startCol = Math.floor((columns - patternCols) / 2);
 
@@ -110,12 +97,16 @@ export default function GameOfLife() {
         }
       }
 
-      return emptyGrid;
+      // Update grid state
+      setGrid(emptyGrid);
+      setInitialGrid(emptyGrid);
+      setGeneration(0);
+      setIsRunning(false);
     },
-    [calculateDimensions]
+    [calculateDimensions, createEmptyGrid]
   );
 
-  // useEffect to handle screen resize
+  // Handle screen resize
   useEffect(() => {
     const handleResize = () => {
       const newDimensions = calculateDimensions();
@@ -129,93 +120,46 @@ export default function GameOfLife() {
           ? "tablet"
           : "desktop";
 
-      // Load the centered pattern
-      const newGrid = loadCenteredPattern(patternName);
-
-      setGrid(newGrid);
-      setInitialGrid(newGrid);
-      setGeneration(0);
-      setIsRunning(false);
+      loadPattern(patternName);
     };
 
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [calculateDimensions, loadCenteredPattern]);
+  }, [calculateDimensions, loadPattern]);
 
-  // Update the loadPattern function in GameOfLife.jsx
-  const loadPattern = useCallback(
-    (patternNameOrArray) => {
-      let newGrid;
-
-      if (Array.isArray(patternNameOrArray)) {
-        // If an array is passed directly, use it as the pattern
-        const pattern = patternNameOrArray;
-        const { columns, rows } = calculateDimensions();
-
-        // Calculate how many rows we need for the pattern
-        const patternRows = pattern.length;
-        const patternCols = pattern[0].length;
-
-        // Make sure we have enough rows to fit the pattern
-        // We need at least patternRows rows in the grid
-        const neededRows = Math.max(rows, patternRows + 10); // Add some padding
-
-        const emptyGrid = Array(neededRows)
-          .fill()
-          .map(() => Array(columns).fill(0));
-
-        // Calculate center positions
-        const startRow = Math.floor((neededRows - patternRows) / 2);
-        const startCol = Math.floor((columns - patternCols) / 2);
-
-        // Place the pattern in the center of the grid
-        newGrid = [...emptyGrid];
-        for (let row = 0; row < patternRows; row++) {
-          for (let col = 0; col < patternCols; col++) {
-            const gridRow = (startRow + row + neededRows) % neededRows;
-            const gridCol = (startCol + col + columns) % columns;
-            newGrid[gridRow][gridCol] = pattern[row][col];
-          }
-        }
-      } else {
-        // Otherwise, get the pattern by name from the patterns object
-        newGrid = loadCenteredPattern(patternNameOrArray);
-      }
-
-      setGrid(newGrid);
-      setInitialGrid(newGrid);
-      setGeneration(0);
-      setIsRunning(false);
-    },
-    [loadCenteredPattern, calculateDimensions]
-  );
-
+  // Optimized computeNextGrid function with memoization of neighbors
   const computeNextGrid = useCallback((currentGrid) => {
     if (!currentGrid.length) return currentGrid;
 
-    // Check if any cells would change state
+    const rows = currentGrid.length;
+    const cols = currentGrid[0].length;
     let hasChanges = false;
-    const newGrid = currentGrid.map((row, rowIndex) => {
-      let rowChanged = false;
-      const newRow = row.map((cell, colIndex) => {
+
+    // Create a new grid only if changes are detected
+    const newGrid = Array(rows)
+      .fill()
+      .map(() => Array(cols).fill(0));
+
+    // Process each cell in the grid
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
         // Calculate neighbor count
         let neighbors = 0;
         for (let dx = -1; dx <= 1; dx++) {
           for (let dy = -1; dy <= 1; dy++) {
             if (dx === 0 && dy === 0) continue;
 
-            const newRow =
-              (rowIndex + dx + currentGrid.length) % currentGrid.length;
-            const newCol =
-              (colIndex + dy + currentGrid[0].length) % currentGrid[0].length;
+            const newRow = (row + dx + rows) % rows;
+            const newCol = (col + dy + cols) % cols;
             neighbors += currentGrid[newRow][newCol];
           }
         }
 
         // Determine new state based on Game of Life rules
+        const currentState = currentGrid[row][col];
         const newState =
-          cell === 1
+          currentState === 1
             ? neighbors === 2 || neighbors === 3
               ? 1
               : 0
@@ -223,34 +167,52 @@ export default function GameOfLife() {
             ? 1
             : 0;
 
-        if (newState !== cell) {
-          rowChanged = true;
+        // Set the new state
+        newGrid[row][col] = newState;
+
+        // Check if the state has changed
+        if (newState !== currentState) {
           hasChanges = true;
         }
+      }
+    }
 
-        return newState;
-      });
-
-      // Only create a new row if something changed
-      return rowChanged ? newRow : row;
-    });
-
-    // If nothing changed, return the original grid
+    // Return the new grid only if changes were made
     return hasChanges ? newGrid : currentGrid;
   }, []);
 
+  // Use requestAnimationFrame for more efficient simulation
   useEffect(() => {
-    let intervalId;
-    if (isRunning) {
-      intervalId = setInterval(() => {
+    let animationFrameId = null;
+    let lastUpdateTime = 0;
+    const simulationSpeed = 200; // ms between updates
+
+    const runSimulation = (timestamp) => {
+      // Only update if enough time has passed
+      if (timestamp - lastUpdateTime >= simulationSpeed) {
         setGrid((prevGrid) => {
           const nextGrid = computeNextGrid(prevGrid);
           setGeneration((prev) => prev + 1);
           return nextGrid;
         });
-      }, 200);
+        lastUpdateTime = timestamp;
+      }
+
+      // Schedule next frame
+      animationFrameId = requestAnimationFrame(runSimulation);
+    };
+
+    if (isRunning) {
+      // Start the simulation loop
+      animationFrameId = requestAnimationFrame(runSimulation);
     }
-    return () => clearInterval(intervalId);
+
+    return () => {
+      // Clean up
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, [isRunning, computeNextGrid]);
 
   // Toggle isRunning state
@@ -258,7 +220,7 @@ export default function GameOfLife() {
     setIsRunning((prev) => !prev);
   }, []);
 
-  // Function to update state when grid is modify
+  // Function to update state when grid is modified
   const handleGridChange = useCallback(
     (newGrid) => {
       setGrid(newGrid);
@@ -269,7 +231,7 @@ export default function GameOfLife() {
     [generation]
   );
 
-  // Function to reload the grid before that the game was starting
+  // Function to reload the grid before the game started
   const reloadInitialGrid = useCallback(() => {
     setGrid(initialGrid);
     setGeneration(0);
