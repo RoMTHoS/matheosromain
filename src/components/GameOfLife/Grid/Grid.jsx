@@ -3,7 +3,7 @@ import useCanvasInteractions from "../../hooks/useCanvasInteractions";
 
 export default function Grid({ grid, setGrid, cursorSize }) {
   const canvasRef = useRef(null);
-
+  const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({
     width: 0,
     height: 0,
@@ -20,7 +20,7 @@ export default function Grid({ grid, setGrid, cursorSize }) {
     cursorSize
   );
 
-  // Calculate dimensions to exactly fit screen
+  // Calculate dimensions to exactly fit screen (horizontally) but allow more rows
   const calculateDimensions = useCallback(() => {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -35,39 +35,88 @@ export default function Grid({ grid, setGrid, cursorSize }) {
       columns = 160;
     }
 
-    // Calculate exact cell size
+    // Calculate exact cell size based on width
     const cellSize = width / columns;
 
-    // Calculate exact number of rows needed to cover screen height
-    const rows = Math.ceil(height / cellSize);
+    // Calculate minimum rows needed to cover viewport height
+    const minRows = Math.ceil(height / cellSize);
+
+    // Use the larger of minRows or grid.length to determine actual rows
+    // This ensures we don't shrink the grid if it has more rows than the viewport
+    const rows = grid.length > minRows ? grid.length : minRows;
 
     return {
       width,
-      height,
+      viewportHeight: height,
       cellSize,
       columns,
       rows,
     };
-  }, []);
+  }, [grid.length]);
 
-  // Update dimensions
+  // Update dimensions when window size changes
   const updateDimensions = useCallback(() => {
     const newDimensions = calculateDimensions();
-    const canvas = canvasRef.current;
 
-    // Set exact canvas dimensions based on cell size and grid dimensions
-    canvas.width = newDimensions.cellSize * newDimensions.columns;
-    canvas.height = newDimensions.cellSize * newDimensions.rows;
+    if (canvasRef.current) {
+      // Always update canvas dimensions on resize for correct drawing
+      canvasRef.current.width = newDimensions.cellSize * newDimensions.columns;
+      canvasRef.current.height = newDimensions.cellSize * newDimensions.rows;
 
-    setDimensions(newDimensions);
+      // Update state dimensions
+      setDimensions(newDimensions);
+    }
   }, [calculateDimensions]);
+
+  // Handle window resize specifically
+  const handleResize = useCallback(() => {
+    updateDimensions();
+
+    // Redraw grid with new dimensions to maintain visual
+    if (grid.length > 0 && canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        const { cellSize } = calculateDimensions();
+
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
+        grid.forEach((row, rowIndex) => {
+          row.forEach((cell, colIndex) => {
+            ctx.fillStyle = cell === 1 ? "#FFF" : "#151619";
+            ctx.fillRect(
+              colIndex * cellSize,
+              rowIndex * cellSize,
+              cellSize,
+              cellSize
+            );
+
+            ctx.strokeStyle = cell === 1 ? "#151619" : "#FFF";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(
+              colIndex * cellSize,
+              rowIndex * cellSize,
+              cellSize,
+              cellSize
+            );
+          });
+        });
+      }
+    }
+  }, [calculateDimensions, grid]);
 
   // Initial and resize dimension updates
   useEffect(() => {
     updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, [updateDimensions]);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [updateDimensions, handleResize]);
+
+  // Update dimensions when grid size changes
+  useEffect(() => {
+    if (grid.length > 0) {
+      updateDimensions();
+    }
+  }, [grid.length, updateDimensions]);
 
   // Initialize grid when dimensions change
   useEffect(() => {
@@ -85,6 +134,8 @@ export default function Grid({ grid, setGrid, cursorSize }) {
   const drawGrid = useCallback(
     (grid) => {
       const canvas = canvasRef.current;
+      if (!canvas) return;
+
       const ctx = canvas.getContext("2d");
       const { cellSize } = dimensions;
 
@@ -116,13 +167,13 @@ export default function Grid({ grid, setGrid, cursorSize }) {
 
   // Redraw grid when grid changes
   useEffect(() => {
-    if (grid.length > 0) {
+    if (grid.length > 0 && dimensions.cellSize > 0) {
       drawGrid(grid);
     }
-  }, [grid, drawGrid, isInteracting]);
+  }, [grid, drawGrid, dimensions.cellSize]);
 
   return (
-    <div className="grid-container">
+    <div className="grid-container" ref={containerRef}>
       <canvas ref={canvasRef}></canvas>
     </div>
   );

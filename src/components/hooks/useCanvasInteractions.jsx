@@ -1,3 +1,4 @@
+// Updated useCanvasInteractions.js
 import { useState, useEffect, useCallback, useRef } from "react";
 
 const useCanvasInteractions = (
@@ -11,13 +12,24 @@ const useCanvasInteractions = (
   const [initialState, setInitialState] = useState(null);
   const lastPositionRef = useRef(null);
 
-  // Convert screen coordinates to grid coordinates
+  // Convert screen coordinates to grid coordinates, accounting for scroll position
   const screenToGrid = useCallback(
     (x, y) => {
+      if (!canvasRef.current) return { row: 0, col: 0 };
+
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
+
+      // Account for scroll position
+      const scrollLeft =
+        window.pageXOffset || document.documentElement.scrollLeft;
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+
+      // Calculate grid coordinates
       const col = Math.floor((x - rect.left) / cellSize);
-      const row = Math.floor((y - rect.top) / cellSize);
+      const row = Math.floor((y - rect.top + scrollTop) / cellSize);
+
       return { row, col };
     },
     [cellSize]
@@ -33,8 +45,8 @@ const useCanvasInteractions = (
       let { row: y0Grid, col: x0Grid } = startPos;
       let { row: y1Grid, col: x1Grid } = endPos;
 
-      // Track modified cells and rows
-      const cellUpdates = [];
+      const modifiedCells = new Set(); // Track modified cells
+      const newGrid = [...grid];
 
       // Bresenham's algorithm
       const dx = Math.abs(x1Grid - x0Grid);
@@ -50,16 +62,19 @@ const useCanvasInteractions = (
         // Update cells in a square pattern around the center
         for (let dy = -radius; dy <= radius; dy++) {
           for (let dx = -radius; dx <= radius; dx++) {
+            if (y0Grid + dy < 0 || y0Grid + dy >= grid.length) continue;
+            if (x0Grid + dx < 0 || x0Grid + dx >= grid[0].length) continue;
+
             const row = (y0Grid + dy + grid.length) % grid.length;
             const col = (x0Grid + dx + grid[0].length) % grid[0].length;
 
-            // Only update if the cell matches the initial state
-            if (grid[row][col] === state) {
-              cellUpdates.push({
-                row,
-                col,
-                value: state === 1 ? 0 : 1,
-              });
+            // Create a unique key for this cell
+            const cellKey = `${row},${col}`;
+
+            // Only update if the cell matches the initial state and hasn't been modified
+            if (!modifiedCells.has(cellKey) && grid[row][col] === state) {
+              newGrid[row][col] = state === 1 ? 0 : 1;
+              modifiedCells.add(cellKey);
             }
           }
         }
@@ -79,26 +94,12 @@ const useCanvasInteractions = (
         }
       }
 
-      // Apply batch updates with efficient row copying
-      if (cellUpdates.length > 0) {
-        setGrid((prevGrid) => {
-          const newGrid = [...prevGrid];
-          const rowsCopied = new Set();
-
-          cellUpdates.forEach(({ row, col, value }) => {
-            // Only copy each row once
-            if (!rowsCopied.has(row)) {
-              newGrid[row] = [...prevGrid[row]];
-              rowsCopied.add(row);
-            }
-            newGrid[row][col] = value;
-          });
-
-          return newGrid;
-        });
+      // Only update if cells were modified
+      if (modifiedCells.size > 0) {
+        setGrid(newGrid);
       }
 
-      return cellUpdates.length > 0;
+      return modifiedCells.size > 0;
     },
     [grid, setGrid, cursorSize, screenToGrid]
   );
@@ -124,6 +125,8 @@ const useCanvasInteractions = (
 
   const handleStart = useCallback(
     (x, y) => {
+      if (!canvasRef.current || !grid.length) return;
+
       const { row, col } = screenToGrid(x, y);
 
       if (row >= 0 && row < grid.length && col >= 0 && col < grid[0].length) {
@@ -134,38 +137,26 @@ const useCanvasInteractions = (
 
         // Apply at the start position
         const radius = Math.floor(cursorSize / 2);
-        const cellUpdates = [];
+        const newGrid = [...grid];
+        let modified = false;
 
         for (let dy = -radius; dy <= radius; dy++) {
           for (let dx = -radius; dx <= radius; dx++) {
+            if (row + dy < 0 || row + dy >= grid.length) continue;
+            if (col + dx < 0 || col + dx >= grid[0].length) continue;
+
             const r = (row + dy + grid.length) % grid.length;
             const c = (col + dx + grid[0].length) % grid[0].length;
 
             if (grid[r][c] === state) {
-              cellUpdates.push({
-                row: r,
-                col: c,
-                value: state === 1 ? 0 : 1,
-              });
+              newGrid[r][c] = state === 1 ? 0 : 1;
+              modified = true;
             }
           }
         }
 
-        if (cellUpdates.length > 0) {
-          setGrid((prevGrid) => {
-            const newGrid = [...prevGrid];
-            const rowsCopied = new Set();
-
-            cellUpdates.forEach(({ row, col, value }) => {
-              if (!rowsCopied.has(row)) {
-                newGrid[row] = [...prevGrid[row]];
-                rowsCopied.add(row);
-              }
-              newGrid[row][col] = value;
-            });
-
-            return newGrid;
-          });
+        if (modified) {
+          setGrid(newGrid);
         }
       }
     },

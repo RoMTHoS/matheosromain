@@ -41,36 +41,70 @@ export default function GameOfLife() {
   }, []);
 
   // Get empty grid with correct dimensions
-  const getEmptyGrid = useCallback(() => {
+  const createEmptyGrid = useCallback(() => {
     const { columns, rows } = calculateDimensions();
     return Array(rows)
       .fill()
       .map(() => Array(columns).fill(0));
   }, [calculateDimensions]);
 
-  // Load a pattern and center it on the grid
+  // Update the loadCenteredPattern function in GameOfLife.jsx
   const loadCenteredPattern = useCallback(
     (patternName) => {
       const { columns, rows } = calculateDimensions();
-      const emptyGrid = Array(rows)
-        .fill()
-        .map(() => Array(columns).fill(0));
 
       // Get the pattern from patterns configuration
       const pattern = devicePatterns[patternName];
-      if (!pattern) return emptyGrid;
+      if (!pattern) {
+        // If pattern not found, try the regular patterns object
+        const altPattern = patterns[patternName];
+        if (!altPattern) {
+          return Array(rows)
+            .fill()
+            .map(() => Array(columns).fill(0));
+        }
 
-      // Calculate center positions
+        // Calculate minimum rows needed to accommodate the pattern
+        const patternRows = altPattern.length;
+        const neededRows = Math.max(rows, patternRows + 10); // Add padding
+
+        const emptyGrid = Array(neededRows)
+          .fill()
+          .map(() => Array(columns).fill(0));
+
+        // Calculate center positions
+        const patternCols = altPattern[0].length;
+        const startRow = Math.floor((neededRows - patternRows) / 2);
+        const startCol = Math.floor((columns - patternCols) / 2);
+
+        // Place the pattern in the center of the grid
+        for (let row = 0; row < patternRows; row++) {
+          for (let col = 0; col < patternCols; col++) {
+            const gridRow = (startRow + row + neededRows) % neededRows;
+            const gridCol = (startCol + col + columns) % columns;
+            emptyGrid[gridRow][gridCol] = altPattern[row][col];
+          }
+        }
+
+        return emptyGrid;
+      }
+
+      // Handle device patterns (original logic)
       const patternRows = pattern.length;
       const patternCols = pattern[0].length;
+      const neededRows = Math.max(rows, patternRows + 10);
 
-      const startRow = Math.floor((rows - patternRows) / 2);
+      const emptyGrid = Array(neededRows)
+        .fill()
+        .map(() => Array(columns).fill(0));
+
+      const startRow = Math.floor((neededRows - patternRows) / 2);
       const startCol = Math.floor((columns - patternCols) / 2);
 
       // Place the pattern in the center of the grid
       for (let row = 0; row < patternRows; row++) {
         for (let col = 0; col < patternCols; col++) {
-          const gridRow = (startRow + row + rows) % rows;
+          const gridRow = (startRow + row + neededRows) % neededRows;
           const gridCol = (startCol + col + columns) % columns;
           emptyGrid[gridRow][gridCol] = pattern[row][col];
         }
@@ -109,7 +143,7 @@ export default function GameOfLife() {
     return () => window.removeEventListener("resize", handleResize);
   }, [calculateDimensions, loadCenteredPattern]);
 
-  // Load specific pattern (string name or direct pattern array)
+  // Update the loadPattern function in GameOfLife.jsx
   const loadPattern = useCallback(
     (patternNameOrArray) => {
       let newGrid;
@@ -118,22 +152,28 @@ export default function GameOfLife() {
         // If an array is passed directly, use it as the pattern
         const pattern = patternNameOrArray;
         const { columns, rows } = calculateDimensions();
-        const emptyGrid = Array(rows)
+
+        // Calculate how many rows we need for the pattern
+        const patternRows = pattern.length;
+        const patternCols = pattern[0].length;
+
+        // Make sure we have enough rows to fit the pattern
+        // We need at least patternRows rows in the grid
+        const neededRows = Math.max(rows, patternRows + 10); // Add some padding
+
+        const emptyGrid = Array(neededRows)
           .fill()
           .map(() => Array(columns).fill(0));
 
         // Calculate center positions
-        const patternRows = pattern.length;
-        const patternCols = pattern[0].length;
-
-        const startRow = Math.floor((rows - patternRows) / 2);
+        const startRow = Math.floor((neededRows - patternRows) / 2);
         const startCol = Math.floor((columns - patternCols) / 2);
 
         // Place the pattern in the center of the grid
         newGrid = [...emptyGrid];
         for (let row = 0; row < patternRows; row++) {
           for (let col = 0; col < patternCols; col++) {
-            const gridRow = (startRow + row + rows) % rows;
+            const gridRow = (startRow + row + neededRows) % neededRows;
             const gridCol = (startCol + col + columns) % columns;
             newGrid[gridRow][gridCol] = pattern[row][col];
           }
@@ -247,12 +287,12 @@ export default function GameOfLife() {
 
   // Function to clear the grid
   const resetGame = useCallback(() => {
-    const emptyGrid = getEmptyGrid();
+    const emptyGrid = createEmptyGrid();
     setGrid(emptyGrid);
     setInitialGrid(emptyGrid);
     setGeneration(0);
     setIsRunning(false);
-  }, [getEmptyGrid]);
+  }, [createEmptyGrid]);
 
   // Add handleCursorSizeChange function
   const handleCursorSizeChange = useCallback((newSize) => {
