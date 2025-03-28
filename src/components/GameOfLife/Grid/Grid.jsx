@@ -1,3 +1,5 @@
+// Updated Grid component with separated functions for resizing and drawing
+
 import { useEffect, useState, useRef, useCallback } from "react";
 
 export default function Grid({
@@ -112,8 +114,8 @@ export default function Grid({
     [dimensions, drawGridLines]
   );
 
-  // Update canvas dimensions and redraw
-  const updateCanvas = useCallback(() => {
+  // SEPARATE FUNCTION: Update canvas dimensions on resize
+  const handleResize = useCallback(() => {
     if (!canvasRef.current) return;
 
     const dims = calculateDimensions();
@@ -123,15 +125,31 @@ export default function Grid({
     canvas.width = dims.cellSize * dims.columns;
     canvas.height = dims.cellSize * dims.rows;
 
-    // Update state
-    setDimensions(dims);
+    // Update dimensions state only when it changes
+    setDimensions((prevDimensions) => {
+      if (
+        prevDimensions.cellSize !== dims.cellSize ||
+        prevDimensions.columns !== dims.columns ||
+        prevDimensions.rows !== dims.rows ||
+        prevDimensions.width !== dims.width ||
+        prevDimensions.viewportHeight !== dims.viewportHeight
+      ) {
+        return dims;
+      }
+      return prevDimensions;
+    });
 
     // Redraw grid
     if (grid.length > 0) {
-      // Use setTimeout to ensure state is updated
-      setTimeout(() => drawGrid(grid), 0);
+      drawGrid(grid);
     }
   }, [calculateDimensions, drawGrid, grid]);
+
+  // SEPARATE FUNCTION: Refresh the canvas with current grid data
+  const refreshCanvas = useCallback(() => {
+    if (!canvasRef.current || !grid.length) return;
+    drawGrid(grid);
+  }, [drawGrid, grid]);
 
   // Convert screen coordinates to grid coordinates
   const screenToGrid = useCallback(
@@ -156,6 +174,7 @@ export default function Grid({
       if (row < 0 || row >= grid.length || col < 0 || col >= grid[0].length)
         return false;
 
+      // Create a new grid with the toggled cell
       const newGrid = [...grid];
 
       // Only modify if it matches the initial state
@@ -199,6 +218,7 @@ export default function Grid({
         ctx.lineTo((col + 1) * cellSize, (row + 1) * cellSize);
         ctx.stroke();
 
+        console.log(JSON.stringify(newGrid));
         return true;
       }
 
@@ -325,18 +345,18 @@ export default function Grid({
     setLastPos(null);
   }, []);
 
-  // Initialize canvas and event listeners
+  // Initialize canvas and event listeners for resizing
   useEffect(() => {
-    updateCanvas();
+    handleResize(); // Initial setup
 
-    window.addEventListener("resize", updateCanvas);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("resize", updateCanvas);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [updateCanvas]);
+  }, [handleResize]);
 
-  // Set up event listeners
+  // Set up event listeners for drawing
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -360,12 +380,19 @@ export default function Grid({
     };
   }, [handleStart, handleMove, handleEnd]);
 
-  // Redraw grid when it changes
+  // Refresh canvas when grid changes
   useEffect(() => {
     if (grid.length > 0 && dimensions.cellSize > 0) {
-      drawGrid(grid);
+      refreshCanvas();
     }
-  }, [grid, drawGrid, dimensions.cellSize]);
+  }, [grid, refreshCanvas, dimensions.cellSize]);
+
+  // Specifically refresh when dimensions change
+  useEffect(() => {
+    if (grid.length > 0 && dimensions.cellSize > 0) {
+      refreshCanvas();
+    }
+  }, [dimensions, refreshCanvas, grid]);
 
   return (
     <div className="grid-container" ref={containerRef}>
