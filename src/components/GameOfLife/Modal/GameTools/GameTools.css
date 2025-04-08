@@ -1,20 +1,22 @@
-.game-settings {
+.game-tools {
   min-width: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
-.settings-title {
+.tools-title {
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
   text-align: center;
 }
 
-.settings-section {
+.tools-section {
   display: flex;
   margin-bottom: 2rem;
   flex-direction: column;
 }
 
-.settings-section h3 {
+.tools-section h3 {
   font-size: 1.1rem;
   margin-bottom: 1rem;
 }
@@ -77,6 +79,15 @@
   transition: all 0.2s;
 }
 
+.confirm-button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #242424;
+  background: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
 .pattern-button:hover {
   background-color: #242424;
   color: white;
@@ -92,9 +103,4 @@
   font-size: 0.8rem;
   color: #666;
   margin-top: 0.5rem;
-}
-
-.text-pattern-form {
-  display: flex;
-  gap: 1em;
 }

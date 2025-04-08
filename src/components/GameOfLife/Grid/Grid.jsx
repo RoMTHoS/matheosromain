@@ -1,6 +1,5 @@
-// Updated Grid component with separated functions for resizing and drawing
-
 import { useEffect, useState, useRef, useCallback } from "react";
+import "./Grid.css";
 
 export default function Grid({
   grid,
@@ -11,10 +10,12 @@ export default function Grid({
 }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const uiHideTimeoutRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [lastPos, setLastPos] = useState(null);
   const [initialCellState, setInitialCellState] = useState(null);
   const [uiActive, setUiActive] = useState(false);
+  const [touchStartTime, setTouchStartTime] = useState(null);
   const [dimensions, setDimensions] = useState({
     width: 0,
     height: 0,
@@ -22,6 +23,55 @@ export default function Grid({
     columns: 0,
     rows: 0,
   });
+
+  // Auto-hide UI after 2 seconds if game is not running
+  const setupUiAutoHide = useCallback(() => {
+    // Clear any existing timeout
+    if (uiHideTimeoutRef.current) {
+      clearTimeout(uiHideTimeoutRef.current);
+      uiHideTimeoutRef.current = null;
+    }
+
+    // If game is running, don't auto-hide
+    if (isGameRunning) {
+      setUiActive(true);
+      setUiActivated(true);
+      return;
+    }
+
+    // Set timeout to hide UI after 2 seconds
+    uiHideTimeoutRef.current = setTimeout(() => {
+      setUiActive(false);
+      setUiActivated(false);
+    }, 2000);
+  }, [isGameRunning, setUiActivated]);
+
+  // When game running state changes, update UI visibility
+  useEffect(() => {
+    if (isGameRunning) {
+      // If game starts running, ensure UI is visible and stays visible
+      setUiActive(true);
+      setUiActivated(true);
+
+      // Clear any auto-hide timeout
+      if (uiHideTimeoutRef.current) {
+        clearTimeout(uiHideTimeoutRef.current);
+        uiHideTimeoutRef.current = null;
+      }
+    } else {
+      // If game stops, start the auto-hide timer
+      setupUiAutoHide();
+    }
+  }, [isGameRunning, setupUiAutoHide]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (uiHideTimeoutRef.current) {
+        clearTimeout(uiHideTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Calculate dimensions to exactly fit screen
   const calculateDimensions = useCallback(() => {
@@ -33,9 +83,9 @@ export default function Grid({
     if (width <= 480) {
       columns = 70;
     } else if (width <= 1024) {
-      columns = 90;
+      columns = 100;
     } else {
-      columns = 160;
+      columns = 250;
     }
 
     // Calculate exact cell size based on width
@@ -254,36 +304,6 @@ export default function Grid({
     [grid, cursorSize, toggleCell]
   );
 
-  // Handle mouse/touch start
-  const handleStart = useCallback(
-    (e) => {
-      e.preventDefault();
-
-      // If UI is not yet active, just activate UI and don't start drawing
-      if (!uiActive) {
-        setUiActive(true);
-        setUiActivated(true); // This should be passed from parent component
-        return;
-      }
-
-      const x = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
-      const y = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
-
-      const { row, col } = screenToGrid(x, y);
-
-      if (row >= 0 && row < grid.length && col >= 0 && col < grid[0].length) {
-        const state = grid[row][col];
-        setInitialCellState(state);
-        setIsDrawing(true);
-        setLastPos({ x, y });
-
-        // Apply cursor
-        applyCursor(row, col, state);
-      }
-    },
-    [grid, screenToGrid, applyCursor, uiActive, setUiActivated]
-  );
-
   // Draw line using Bresenham algorithm
   const drawLine = useCallback(
     (x0, y0, x1, y1, state) => {
@@ -320,30 +340,186 @@ export default function Grid({
     [screenToGrid, applyCursor]
   );
 
-  // Handle mouse/touch move
-  const handleMove = useCallback(
+  // Unified interaction start handler
+  const handleInteractionStart = useCallback(
+    (clientX, clientY, isTouch = false) => {
+      // Always show UI on first interaction and start auto-hide timer
+      if (!uiActive) {
+        setUiActive(true);
+        setUiActivated(true);
+
+        // Start auto-hide timer if game is not running
+        if (!isGameRunning) {
+          setupUiAutoHide();
+        }
+
+        // Don't start drawing on the first interaction
+        return;
+      }
+
+      // If we're here, UI is already active, so we can start drawing
+      const { row, col } = screenToGrid(clientX, clientY);
+
+      if (row >= 0 && row < grid.length && col >= 0 && col < grid[0].length) {
+        const state = grid[row][col];
+        setInitialCellState(state);
+        setIsDrawing(true);
+        setLastPos({ x: clientX, y: clientY });
+
+        // Apply cursor
+        applyCursor(row, col, state);
+      }
+    },
+    [
+      grid,
+      screenToGrid,
+      applyCursor,
+      uiActive,
+      isGameRunning,
+      setupUiAutoHide,
+      setUiActivated,
+    ]
+  );
+
+  // Mouse down handler
+  const handleMouseDown = useCallback(
+    (e) => {
+      // Reset any auto-hide timer to keep UI visible during interaction
+      if (!isGameRunning) {
+        setupUiAutoHide();
+      }
+
+      // Only prevent default for mouse events or when UI is active
+      e.preventDefault();
+      handleInteractionStart(e.clientX, e.clientY, false);
+    },
+    [handleInteractionStart, isGameRunning, setupUiAutoHide]
+  );
+
+  // Touch start handler
+  const handleTouchStart = useCallback(
+    (e) => {
+      // Only handle touch move if we're drawing
+      if (!uiActive) {
+        // If not drawing, allow default behavior (scrolling)
+        return;
+      }
+      // Reset any auto-hide timer to keep UI visible during interaction
+      if (!isGameRunning) {
+        setupUiAutoHide();
+      }
+
+      // Store touch start time for differentiating between tap and scroll
+      setTouchStartTime(Date.now());
+
+      // For touch events, only prevent default if UI is active or game is running
+      if (uiActive || isGameRunning) {
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        handleInteractionStart(touch.clientX, touch.clientY, true);
+      } else {
+        // Don't prevent default to allow scrolling when UI is not active
+        // and game is not running, but still show UI
+        if (!uiActive) {
+          setUiActive(true);
+          setUiActivated(true);
+
+          // Start auto-hide timer
+          setupUiAutoHide();
+        }
+      }
+    },
+    [
+      handleInteractionStart,
+      uiActive,
+      isGameRunning,
+      setUiActivated,
+      setupUiAutoHide,
+    ]
+  );
+
+  // Mouse move handler
+  const handleMouseMove = useCallback(
     (e) => {
       if (!isDrawing || initialCellState === null || !lastPos) return;
 
+      // Keep UI visible during drawing if game is not running
+      if (!isGameRunning) {
+        setupUiAutoHide();
+      }
+
       e.preventDefault();
 
-      const x = e.type.includes("mouse") ? e.clientX : e.touches[0].clientX;
-      const y = e.type.includes("mouse") ? e.clientY : e.touches[0].clientY;
-
       // Draw line between last position and current position
-      drawLine(lastPos.x, lastPos.y, x, y, initialCellState);
+      drawLine(lastPos.x, lastPos.y, e.clientX, e.clientY, initialCellState);
 
       // Update last position
-      setLastPos({ x, y });
+      setLastPos({ x: e.clientX, y: e.clientY });
     },
-    [isDrawing, initialCellState, lastPos, drawLine]
+    [
+      isDrawing,
+      initialCellState,
+      lastPos,
+      drawLine,
+      isGameRunning,
+      setupUiAutoHide,
+    ]
   );
 
-  // Handle mouse/touch end
-  const handleEnd = useCallback(() => {
+  // Touch move handler
+  const handleTouchMove = useCallback(
+    (e) => {
+      // Only handle touch move if we're drawing
+      if (!isDrawing || initialCellState === null || !lastPos) {
+        // If not drawing, allow default behavior (scrolling)
+        return;
+      }
+
+      // Keep UI visible during drawing if game is not running
+      if (!isGameRunning) {
+        setupUiAutoHide();
+      }
+
+      // We're drawing, so prevent scrolling
+      e.preventDefault();
+
+      const touch = e.touches[0];
+
+      // Draw line between last position and current position
+      drawLine(
+        lastPos.x,
+        lastPos.y,
+        touch.clientX,
+        touch.clientY,
+        initialCellState
+      );
+
+      // Update last position
+      setLastPos({ x: touch.clientX, y: touch.clientY });
+    },
+    [
+      isDrawing,
+      initialCellState,
+      lastPos,
+      drawLine,
+      isGameRunning,
+      setupUiAutoHide,
+    ]
+  );
+
+  // Handle end events
+  const handleInteractionEnd = useCallback(() => {
     setIsDrawing(false);
     setLastPos(null);
-  }, []);
+    setInitialCellState(null);
+    setTouchStartTime(null);
+
+    // Start auto-hide timer if game is not running
+    if (!isGameRunning) {
+      setupUiAutoHide();
+    }
+  }, [isGameRunning, setupUiAutoHide]);
 
   // Initialize canvas and event listeners for resizing
   useEffect(() => {
@@ -356,29 +532,56 @@ export default function Grid({
     };
   }, [handleResize]);
 
-  // Set up event listeners for drawing
+  // Set up event listeners for interaction based on game state
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.addEventListener("mousedown", handleStart);
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mouseup", handleEnd);
+    // Always set up mouse events the same way
+    canvas.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleInteractionEnd);
 
-    canvas.addEventListener("touchstart", handleStart, { passive: false });
-    canvas.addEventListener("touchmove", handleMove, { passive: false });
-    canvas.addEventListener("touchend", handleEnd);
+    // First remove any existing touch listeners to avoid duplicates
+    canvas.removeEventListener("touchstart", handleTouchStart);
+    canvas.removeEventListener("touchmove", handleTouchMove);
+    canvas.removeEventListener("touchend", handleInteractionEnd);
+
+    // Then add touch listeners with different passive settings based on state
+    // When UI is active or game is running, we want to control touch behavior
+    if (uiActive || isGameRunning) {
+      canvas.addEventListener("touchstart", handleTouchStart, {
+        passive: false,
+      });
+      canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
+    } else {
+      // Otherwise, allow default scrolling behavior
+      canvas.addEventListener("touchstart", handleTouchStart, {
+        passive: true,
+      });
+      canvas.addEventListener("touchmove", handleTouchMove, { passive: true });
+    }
+    canvas.addEventListener("touchend", handleInteractionEnd);
 
     return () => {
-      canvas.removeEventListener("mousedown", handleStart);
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleEnd);
+      // Cleanup
+      canvas.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleInteractionEnd);
 
-      canvas.removeEventListener("touchstart", handleStart);
-      canvas.removeEventListener("touchmove", handleMove);
-      canvas.removeEventListener("touchend", handleEnd);
+      canvas.removeEventListener("touchstart", handleTouchStart);
+      canvas.removeEventListener("touchmove", handleTouchMove);
+      canvas.removeEventListener("touchend", handleInteractionEnd);
     };
-  }, [handleStart, handleMove, handleEnd]);
+  }, [
+    handleMouseDown,
+    handleMouseMove,
+    handleTouchStart,
+    handleTouchMove,
+    handleInteractionEnd,
+    uiActive,
+    isGameRunning,
+  ]);
 
   // Refresh canvas when grid changes
   useEffect(() => {
@@ -386,13 +589,6 @@ export default function Grid({
       refreshCanvas();
     }
   }, [grid, refreshCanvas, dimensions.cellSize]);
-
-  // Specifically refresh when dimensions change
-  useEffect(() => {
-    if (grid.length > 0 && dimensions.cellSize > 0) {
-      refreshCanvas();
-    }
-  }, [dimensions, refreshCanvas, grid]);
 
   return (
     <div className="grid-container" ref={containerRef}>

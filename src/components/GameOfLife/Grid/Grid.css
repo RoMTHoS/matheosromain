@@ -1,4 +1,4 @@
-.grid-container {
+/* .grid-container {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -11,5 +11,25 @@
 }
 
 canvas {
-  display: block; /* Removes any extra space below canvas */
+  display: block; /* Removes any extra space below canvas 
+} 
+*/
+
+.grid-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  touch-action: pan-x pan-y; /* Enable default scrolling behavior */
+}
+
+/* When the game is running or UI is active, disable default touch actions */
+.game-running .grid-container,
+.ui-active .grid-container {
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+  margin: 0 auto;
 }

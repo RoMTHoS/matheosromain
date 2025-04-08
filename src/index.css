@@ -7,14 +7,12 @@ a:hover {
   color: #535bf2;
 }
 
-/* 1. Use a more-intuitive box-sizing model */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-/* 2. Remove default margin and padding */
 * {
   margin: 0;
   padding: 0;
@@ -26,16 +24,13 @@ body {
   overflow: hidden;
   margin: 0;
   padding: 0;
-  /* 3. Add accessible line-height */
   line-height: 1.5;
-  /* 4. Improve text rendering */
   -webkit-font-smoothing: antialiased;
   display: flex;
   place-items: center;
   min-height: 100vh;
 }
 
-/* 5. Improve media defaults */
 img,
 picture,
 video,
@@ -45,7 +40,6 @@ svg {
   max-width: 100%;
 }
 
-/* 6. Inherit fonts for form controls */
 input,
 button,
 textarea,
@@ -53,7 +47,6 @@ select {
   font: inherit;
 }
 
-/* 7. Avoid text overflows */
 p,
 h1,
 h2,
@@ -64,7 +57,6 @@ h6 {
   overflow-wrap: break-word;
 }
 
-/* 8. Improve line wrapping */
 p,
 h1,
 h2,
@@ -75,9 +67,6 @@ h6 {
   word-wrap: break-word;
 }
 
-/*
-  9. Create a root stacking context
-*/
 :root,
 #root,
 #__next {

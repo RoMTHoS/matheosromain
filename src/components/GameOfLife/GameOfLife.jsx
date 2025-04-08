@@ -4,10 +4,10 @@ import GameControls from "./GameControls/GameControls";
 import GameInfo from "./GameInfo/GameInfo";
 import Modal from "./Modal/Modal";
 import GameTools from "./Modal/GameTools/GameTools";
-import patterns from "../../utils/golPatterns.json";
-import mobilePatterns from "../../utils/mobilePattern.json";
+import golPatterns from "../../utils/golPatterns.json";
+import mobilePatterns from "../../utils/mobilePattern_0.json";
 import tabletPatterns from "../../utils/tabletPattern.json";
-import desktopPatterns from "../../utils/desktopPattern.json";
+import desktopPatterns from "../../utils/desktopPattern_draft.json";
 import "./GameOfLife.css";
 
 export default function GameOfLife() {
@@ -16,13 +16,13 @@ export default function GameOfLife() {
   const [initialGrid, setInitialGrid] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [generation, setGeneration] = useState(0);
-  const [showImageProcessor, setShowImageProcessor] = useState(false);
-  const [dimensions, setDimensions] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [controlsVisible, setControlsVisible] = useState(false);
   const hideTimeoutRef = useRef(null);
-  const simulationRef = useRef(null);
   const [uiActive, setUiActive] = useState(false);
+  const [dimensions, setDimensions] = useState(null);
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const [showImageProcessor, setShowImageProcessor] = useState(false);
+  const simulationRef = useRef(null);
 
   // Memoize the calculation of grid dimensions
   const calculateDimensions = useMemo(() => {
@@ -34,9 +34,9 @@ export default function GameOfLife() {
       if (width <= 480) {
         columns = 70;
       } else if (width <= 1024) {
-        columns = 90;
+        columns = 100;
       } else {
-        columns = 160;
+        columns = 250;
       }
 
       const cellSize = width / columns;
@@ -66,8 +66,18 @@ export default function GameOfLife() {
         pattern = patternNameOrArray;
       } else {
         // Pattern name from configuration
+        console.log(Object.entries(golPatterns));
         // Check in the appropriate pattern file based on the name
-        pattern = patterns[patternNameOrArray];
+        for (const [familyName, familyPatterns] of Object.entries(
+          golPatterns
+        )) {
+          console.log(familyName);
+          console.log(familyPatterns);
+          // Check if this family has the pattern name
+          if (patternNameOrArray in familyPatterns) {
+            pattern = familyPatterns[patternNameOrArray];
+          }
+        }
 
         // If it's a device-specific pattern name, use the corresponding pattern
         if (patternNameOrArray === "mobile") {
@@ -363,7 +373,7 @@ export default function GameOfLife() {
           onCursorSizeChange={handleCursorSizeChange}
           gridColumns={grid[0]?.length || 0}
           gridRows={grid.length || 0}
-          patterns={Object.keys(patterns)}
+          patterns={golPatterns}
           onPatternSelect={loadPattern}
         />
       </Modal>
