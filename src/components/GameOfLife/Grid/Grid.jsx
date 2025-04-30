@@ -238,21 +238,21 @@ export default function Grid({
       updateIconBoundsFromMarkers(grid, cellSize);
 
       // Debug visualization - uncomment to see bounding boxes
-      ctx.strokeStyle = "red";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(
-        iconBounds.github.x1,
-        iconBounds.github.y1,
-        iconBounds.github.x2 - iconBounds.github.x1,
-        iconBounds.github.y2 - iconBounds.github.y1
-      );
-      ctx.strokeStyle = "blue";
-      ctx.strokeRect(
-        iconBounds.linkedin.x1,
-        iconBounds.linkedin.y1,
-        iconBounds.linkedin.x2 - iconBounds.linkedin.x1,
-        iconBounds.linkedin.y2 - iconBounds.linkedin.y1
-      );
+      // ctx.strokeStyle = "red";
+      // ctx.lineWidth = 2;
+      // ctx.strokeRect(
+      //   iconBounds.github.x1,
+      //   iconBounds.github.y1,
+      //   iconBounds.github.x2 - iconBounds.github.x1,
+      //   iconBounds.github.y2 - iconBounds.github.y1
+      // );
+      // ctx.strokeStyle = "blue";
+      // ctx.strokeRect(
+      //   iconBounds.linkedin.x1,
+      //   iconBounds.linkedin.y1,
+      //   iconBounds.linkedin.x2 - iconBounds.linkedin.x1,
+      //   iconBounds.linkedin.y2 - iconBounds.linkedin.y1
+      // );
     },
     [dimensions, drawGridLines, updateIconBoundsFromMarkers]
   );
