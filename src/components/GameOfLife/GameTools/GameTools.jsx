@@ -1,6 +1,6 @@
 import { useState } from "react";
-import ImageProcessor from "../../ImageProcessor/ImageProcessor";
-import alphabetPatterns from "../../../../utils/alphabetPattern.json";
+import ImageProcessor from "../ImageProcessor/ImageProcessor";
+import alphabetPatterns from "../../../utils/alphabetPattern.json";
 import "./GameTools.css";
 
 // Function to convert text to pattern with multi-line support
@@ -342,16 +342,16 @@ const GameTools = ({
       <h2 className="tools-title">Game Tools</h2>
 
       <div className="tools-section">
-        <h3>Upload an image and make it alive</h3>
-        <ImageProcessor
-          onImageProcessed={onImageProcessed}
-          gridColumns={gridColumns}
-          gridRows={gridRows}
-        />
-      </div>
+        <div className="tools-section-content">
+          <h3>Upload an image and make it alive</h3>
+          <ImageProcessor
+            onImageProcessed={onImageProcessed}
+            gridColumns={gridColumns}
+            gridRows={gridRows}
+          />
+        </div>
 
-      <div className="tools-section">
-        <div className="cursor-controls">
+        <div className="cursor-controls tools-section-content">
           <h3>Cursor Size</h3>
           <div className="cursor-controls-buttons">
             <button
@@ -372,12 +372,12 @@ const GameTools = ({
         </div>
       </div>
 
-      <div className="tools-section">
+      <div className="tools-section-content">
         <h3>Bring any text to life</h3>
         <textarea
           value={customText}
           onChange={(e) => setCustomText(e.target.value)}
-          placeholder="Enter text (will automatically wrap to fit grid)..."
+          placeholder=" Enter text..."
           className="text-input"
           rows={3}
         />
@@ -387,8 +387,8 @@ const GameTools = ({
       <button onClick={handleTextSubmit} className="confirm-button">
         Generate Pattern From Text
       </button>
-
-      <div className="tools-section">
+      <br></br>
+      <div className="tools-section-content">
         <h3>Game of Life famous patterns</h3>
         <div className="pattern-selector">
           {Object.entries(patterns).map(([family, familyPatterns]) => (

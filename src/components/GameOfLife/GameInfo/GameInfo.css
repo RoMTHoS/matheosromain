@@ -23,6 +23,40 @@
   transition: all 0.2s ease;
 }
 
+.modal-content .game-rules-container {
+  /* Force this in case the modal structure includes other wrappers */
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.game-rules-container {
+  padding: 20px;
+}
+
+.game-rules-container h2 {
+  margin-top: 0;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.game-rules-container h3 {
+  margin-top: 20px;
+  color: #444;
+}
+
+.game-rules-container ul {
+  padding-left: 20px;
+}
+
+.game-rules-container li {
+  margin-bottom: 10px;
+}
+
+.game-rules-container p {
+  line-height: 1.5;
+}
+
 /*Tablet and up*/
 @media (min-width: 768px) {
   .game-info-button:hover {

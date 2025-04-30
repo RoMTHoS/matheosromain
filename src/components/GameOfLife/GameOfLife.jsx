@@ -3,11 +3,11 @@ import Grid from "./Grid/Grid";
 import GameControls from "./GameControls/GameControls";
 import GameInfo from "./GameInfo/GameInfo";
 import Modal from "./Modal/Modal";
-import GameTools from "./Modal/GameTools/GameTools";
+import GameTools from "./GameTools/GameTools";
 import golPatterns from "../../utils/golPatterns.json";
-import mobilePatterns from "../../utils/mobilePattern_0.json";
+import mobilePatterns from "../../utils/mobilePattern.json";
 import tabletPatterns from "../../utils/tabletPattern.json";
-import desktopPatterns from "../../utils/desktopPattern_draft.json";
+import desktopPatterns from "../../utils/desktopPattern_0.json";
 import "./GameOfLife.css";
 
 export default function GameOfLife() {
@@ -16,7 +16,7 @@ export default function GameOfLife() {
   const [initialGrid, setInitialGrid] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [generation, setGeneration] = useState(0);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const hideTimeoutRef = useRef(null);
   const [uiActive, setUiActive] = useState(false);
   const [dimensions, setDimensions] = useState(null);
@@ -32,11 +32,11 @@ export default function GameOfLife() {
 
       let columns;
       if (width <= 480) {
-        columns = 70;
+        columns = 80;
       } else if (width <= 1024) {
-        columns = 100;
+        columns = 130;
       } else {
-        columns = 250;
+        columns = 370;
       }
 
       const cellSize = width / columns;
@@ -349,7 +349,7 @@ export default function GameOfLife() {
           onReset={resetGame}
           onReload={reloadInitialGrid}
           generation={generation}
-          onOpenSettings={() => setShowSettings(true)}
+          onOpenTools={() => setShowTools(true)}
           cursorSize={cursorSize}
           onCursorSizeChange={setCursorSize}
         />
@@ -363,11 +363,11 @@ export default function GameOfLife() {
         setUiActivated={setUiActive}
       />
 
-      <Modal isOpen={showSettings} onClose={() => setShowSettings(false)}>
+      <Modal isOpen={showTools} onClose={() => setShowTools(false)}>
         <GameTools
           onImageProcessed={(processedGrid) => {
             handleImageProcessed(processedGrid);
-            setShowSettings(false);
+            setShowTools(false);
           }}
           cursorSize={cursorSize}
           onCursorSizeChange={handleCursorSizeChange}

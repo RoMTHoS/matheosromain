@@ -11,7 +11,7 @@ const GameControls = ({
   onToggleRun,
   onReset,
   onReload,
-  onOpenSettings,
+  onOpenTools,
   generation,
 }) => {
   // Wrapper for play/pause button to ensure UI stays visible
@@ -39,13 +39,13 @@ const GameControls = ({
   );
 
   // Wrapper for settings button to allow UI auto-hide
-  const handleOpenSettings = useCallback(
+  const handleOpenTools = useCallback(
     (e) => {
       // Prevent event bubbling
       e.stopPropagation();
-      onOpenSettings();
+      onOpenTools();
     },
-    [onOpenSettings]
+    [onOpenTools]
   );
 
   return (
@@ -67,7 +67,7 @@ const GameControls = ({
       </button>
 
       <button
-        onClick={handleOpenSettings}
+        onClick={handleOpenTools}
         className="control-button"
         aria-label="Load Pattern"
       >

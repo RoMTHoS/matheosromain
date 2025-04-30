@@ -1,5 +1,6 @@
 .game-tools {
   min-width: 300px;
+  max-width: 650px;
   display: flex;
   flex-direction: column;
 }
@@ -12,18 +13,23 @@
 
 .tools-section {
   display: flex;
-  margin-bottom: 2rem;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.tools-section-content {
+  display: flex;
+  margin-bottom: 0.5rem;
   flex-direction: column;
 }
 
-.tools-section h3 {
+h3 {
   font-size: 1.1rem;
   margin-bottom: 1rem;
 }
 
 .cursor-controls {
   display: flex;
-  gap: 1rem;
 }
 
 .cursor-controls-buttons {
@@ -67,11 +73,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.5rem;
 }
 
 .pattern-button {
   padding: 0.5rem 1rem;
+  margin: 0.2rem 0.2rem 0.2rem 0;
   border: 1px solid #242424;
   background: none;
   border-radius: 0.5rem;

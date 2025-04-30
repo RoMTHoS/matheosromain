@@ -24,6 +24,12 @@ export default function Grid({
     rows: 0,
   });
 
+  // Add icon tracking state - store bounds of each icon
+  const [iconBounds, setIconBounds] = useState({
+    github: { x1: 0, y1: 0, x2: 0, y2: 0 },
+    linkedin: { x1: 0, y1: 0, x2: 0, y2: 0 },
+  });
+
   // Auto-hide UI after 2 seconds if game is not running
   const setupUiAutoHide = useCallback(() => {
     // Clear any existing timeout
@@ -81,11 +87,11 @@ export default function Grid({
     // Determine number of columns based on screen width
     let columns;
     if (width <= 480) {
-      columns = 70;
+      columns = 80;
     } else if (width <= 1024) {
-      columns = 100;
+      columns = 130;
     } else {
-      columns = 250;
+      columns = 370;
     }
 
     // Calculate exact cell size based on width
@@ -128,6 +134,73 @@ export default function Grid({
     }
   }, []);
 
+  // Track the marker corners for each icon and update their bounds
+  const updateIconBoundsFromMarkers = useCallback((grid, cellSize) => {
+    if (!grid || grid.length === 0) return;
+
+    // Temporary storage for markers
+    const githubMarkers = [];
+    const linkedinMarkers = [];
+
+    // Scan the grid for markers (3 for GitHub, 4 for LinkedIn)
+    for (let rowIndex = 0; rowIndex < grid.length; rowIndex++) {
+      const row = grid[rowIndex];
+      if (!row) continue;
+
+      for (let colIndex = 0; colIndex < row.length; colIndex++) {
+        if (row[colIndex] === 3) {
+          // Found a GitHub marker
+          githubMarkers.push({
+            x: colIndex * cellSize,
+            y: rowIndex * cellSize,
+          });
+        } else if (row[colIndex] === 4) {
+          // Found a LinkedIn marker
+          linkedinMarkers.push({
+            x: colIndex * cellSize,
+            y: rowIndex * cellSize,
+          });
+        }
+      }
+    }
+
+    // If we found all GitHub markers (should be 4 corners)
+    if (githubMarkers.length >= 2) {
+      // Find the min/max coordinates to get the bounding box
+      const xValues = githubMarkers.map((marker) => marker.x);
+      const yValues = githubMarkers.map((marker) => marker.y);
+
+      const x1 = Math.min(...xValues);
+      const y1 = Math.min(...yValues);
+      const x2 = Math.max(...xValues);
+      const y2 = Math.max(...yValues);
+
+      // Update GitHub bounds
+      setIconBounds((prev) => ({
+        ...prev,
+        github: { x1, y1, x2, y2 },
+      }));
+    }
+
+    // If we found all LinkedIn markers (should be 4 corners)
+    if (linkedinMarkers.length >= 2) {
+      // Find the min/max coordinates to get the bounding box
+      const xValues = linkedinMarkers.map((marker) => marker.x);
+      const yValues = linkedinMarkers.map((marker) => marker.y);
+
+      const x1 = Math.min(...xValues);
+      const y1 = Math.min(...yValues);
+      const x2 = Math.max(...xValues);
+      const y2 = Math.max(...yValues);
+
+      // Update LinkedIn bounds
+      setIconBounds((prev) => ({
+        ...prev,
+        linkedin: { x1, y1, x2, y2 },
+      }));
+    }
+  }, []);
+
   // Draw the grid cells
   const drawGrid = useCallback(
     (grid) => {
@@ -143,11 +216,11 @@ export default function Grid({
       ctx.fillStyle = "#151619";
       ctx.fillRect(0, 0, width, height);
 
-      // Draw alive cells
-      ctx.fillStyle = "#FFF";
+      // Draw cells based on their values
       grid.forEach((row, rowIndex) => {
         row.forEach((cell, colIndex) => {
           if (cell === 1) {
+            ctx.fillStyle = "#FFF";
             ctx.fillRect(
               colIndex * cellSize + 0.5,
               rowIndex * cellSize + 0.5,
@@ -160,8 +233,28 @@ export default function Grid({
 
       // Draw grid lines
       drawGridLines(ctx, width, height, cellSize);
+
+      // Update icon bounds based on markers in the grid
+      updateIconBoundsFromMarkers(grid, cellSize);
+
+      // Debug visualization - uncomment to see bounding boxes
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(
+        iconBounds.github.x1,
+        iconBounds.github.y1,
+        iconBounds.github.x2 - iconBounds.github.x1,
+        iconBounds.github.y2 - iconBounds.github.y1
+      );
+      ctx.strokeStyle = "blue";
+      ctx.strokeRect(
+        iconBounds.linkedin.x1,
+        iconBounds.linkedin.y1,
+        iconBounds.linkedin.x2 - iconBounds.linkedin.x1,
+        iconBounds.linkedin.y2 - iconBounds.linkedin.y1
+      );
     },
-    [dimensions, drawGridLines]
+    [dimensions, drawGridLines, updateIconBoundsFromMarkers]
   );
 
   // SEPARATE FUNCTION: Update canvas dimensions on resize
@@ -218,6 +311,55 @@ export default function Grid({
     [dimensions]
   );
 
+  // Check if a point is within an icon area
+  const isPointInIcon = useCallback(
+    (x, y) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+
+      const rect = canvas.getBoundingClientRect();
+      const canvasX = x - rect.left;
+      const canvasY = y - rect.top;
+
+      // Check if point is within GitHub icon bounds
+      if (
+        canvasX >= iconBounds.github.x1 &&
+        canvasX <= iconBounds.github.x2 &&
+        canvasY >= iconBounds.github.y1 &&
+        canvasY <= iconBounds.github.y2
+      ) {
+        return "github";
+      }
+
+      // Check if point is within LinkedIn icon bounds
+      if (
+        canvasX >= iconBounds.linkedin.x1 &&
+        canvasX <= iconBounds.linkedin.x2 &&
+        canvasY >= iconBounds.linkedin.y1 &&
+        canvasY <= iconBounds.linkedin.y2
+      ) {
+        return "linkedin";
+      }
+
+      return null;
+    },
+    [iconBounds]
+  );
+
+  // Handle icon click
+  const handleIconClick = useCallback((iconName) => {
+    if (iconName === "github") {
+      window.open("https://github.com/RoMTHoS", "_blank");
+      console.log("GitHub icon clicked!");
+    } else if (iconName === "linkedin") {
+      window.open(
+        "https://www.linkedin.com/in/romain-matheos-12153616b/",
+        "_blank"
+      );
+      console.log("LinkedIn icon clicked!");
+    }
+  }, []);
+
   // Toggle cell state and redraw
   const toggleCell = useCallback(
     (row, col, state) => {
@@ -226,6 +368,11 @@ export default function Grid({
 
       // Create a new grid with the toggled cell
       const newGrid = [...grid];
+
+      // Don't toggle marker cells (3 and 4)
+      if (grid[row][col] === 3 || grid[row][col] === 4) {
+        return false;
+      }
 
       // Only modify if it matches the initial state
       if (grid[row][col] === state) {
@@ -268,7 +415,6 @@ export default function Grid({
         ctx.lineTo((col + 1) * cellSize, (row + 1) * cellSize);
         ctx.stroke();
 
-        console.log(JSON.stringify(newGrid));
         return true;
       }
 
@@ -343,6 +489,15 @@ export default function Grid({
   // Unified interaction start handler
   const handleInteractionStart = useCallback(
     (clientX, clientY, isTouch = false) => {
+      // IMPORTANT: First check if click/touch is on an icon - BEFORE UI activation
+      const clickedIcon = isPointInIcon(clientX, clientY);
+      if (clickedIcon) {
+        handleIconClick(clickedIcon);
+        // Prevent further processing and don't activate UI if it was a click on an icon
+        return;
+      }
+
+      // If not on an icon, now we can handle UI activation
       // Always show UI on first interaction and start auto-hide timer
       if (!uiActive) {
         setUiActive(true);
@@ -361,6 +516,11 @@ export default function Grid({
       const { row, col } = screenToGrid(clientX, clientY);
 
       if (row >= 0 && row < grid.length && col >= 0 && col < grid[0].length) {
+        // Don't allow drawing on marker cells (3 and 4)
+        if (grid[row][col] === 3 || grid[row][col] === 4) {
+          return;
+        }
+
         const state = grid[row][col];
         setInitialCellState(state);
         setIsDrawing(true);
@@ -378,54 +538,69 @@ export default function Grid({
       isGameRunning,
       setupUiAutoHide,
       setUiActivated,
+      isPointInIcon,
+      handleIconClick,
     ]
   );
 
   // Mouse down handler
   const handleMouseDown = useCallback(
     (e) => {
+      // Prevent default regardless to ensure proper handling
+      e.preventDefault();
+
+      // All click handling is in handleInteractionStart
+      handleInteractionStart(e.clientX, e.clientY, false);
+
       // Reset any auto-hide timer to keep UI visible during interaction
-      if (!isGameRunning) {
+      // (but only if the UI is actually active - don't interfere with icon clicks)
+      if (uiActive && !isGameRunning) {
         setupUiAutoHide();
       }
-
-      // Only prevent default for mouse events or when UI is active
-      e.preventDefault();
-      handleInteractionStart(e.clientX, e.clientY, false);
     },
-    [handleInteractionStart, isGameRunning, setupUiAutoHide]
+    [handleInteractionStart, uiActive, isGameRunning, setupUiAutoHide]
   );
 
   // Touch start handler
   const handleTouchStart = useCallback(
     (e) => {
-      // Only handle touch move if we're drawing
-      if (!uiActive) {
-        // If not drawing, allow default behavior (scrolling)
+      const touch = e.touches[0];
+
+      // IMPORTANT: Check for icon touch FIRST, before any other processing
+      const clickedIcon = isPointInIcon(touch.clientX, touch.clientY);
+      if (clickedIcon) {
+        // Cancel the event to prevent any default behavior
+        e.preventDefault();
+        handleIconClick(clickedIcon);
         return;
       }
-      // Reset any auto-hide timer to keep UI visible during interaction
-      if (!isGameRunning) {
-        setupUiAutoHide();
+
+      // Now handle normal touch behavior
+      // Only handle touch if UI is active, otherwise allow default behavior (scrolling)
+      if (!uiActive) {
+        // We'll still activate the UI but allow default scrolling
+        setUiActive(true);
+        setUiActivated(true);
+
+        // Start auto-hide timer
+        if (!isGameRunning) {
+          setupUiAutoHide();
+        }
+        return;
       }
 
-      // Store touch start time for differentiating between tap and scroll
-      setTouchStartTime(Date.now());
-
-      // For touch events, only prevent default if UI is active or game is running
+      // Prevent default for touch events when UI is active or game is running
       if (uiActive || isGameRunning) {
         e.preventDefault();
 
-        const touch = e.touches[0];
-        handleInteractionStart(touch.clientX, touch.clientY, true);
-      } else {
-        // Don't prevent default to allow scrolling when UI is not active
-        // and game is not running, but still show UI
-        if (!uiActive) {
-          setUiActive(true);
-          setUiActivated(true);
+        // Store touch start time for potential tap vs. scroll detection
+        setTouchStartTime(Date.now());
 
-          // Start auto-hide timer
+        // Process the touch for drawing
+        handleInteractionStart(touch.clientX, touch.clientY, true);
+
+        // Reset auto-hide timer to keep UI visible
+        if (!isGameRunning) {
           setupUiAutoHide();
         }
       }
@@ -436,6 +611,8 @@ export default function Grid({
       isGameRunning,
       setUiActivated,
       setupUiAutoHide,
+      isPointInIcon,
+      handleIconClick,
     ]
   );
 
@@ -516,10 +693,10 @@ export default function Grid({
     setTouchStartTime(null);
 
     // Start auto-hide timer if game is not running
-    if (!isGameRunning) {
+    if (uiActive && !isGameRunning) {
       setupUiAutoHide();
     }
-  }, [isGameRunning, setupUiAutoHide]);
+  }, [uiActive, isGameRunning, setupUiAutoHide]);
 
   // Initialize canvas and event listeners for resizing
   useEffect(() => {
@@ -547,18 +724,15 @@ export default function Grid({
     canvas.removeEventListener("touchmove", handleTouchMove);
     canvas.removeEventListener("touchend", handleInteractionEnd);
 
-    // Then add touch listeners with different passive settings based on state
-    // When UI is active or game is running, we want to control touch behavior
+    // Always set up touch events with passive: false to ensure we can prevent default
+    // for icon clicks even on first interaction
+    canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+
+    // For touch move, we can be more selective
     if (uiActive || isGameRunning) {
-      canvas.addEventListener("touchstart", handleTouchStart, {
-        passive: false,
-      });
       canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
     } else {
-      // Otherwise, allow default scrolling behavior
-      canvas.addEventListener("touchstart", handleTouchStart, {
-        passive: true,
-      });
+      // Allow default scrolling behavior when not drawing
       canvas.addEventListener("touchmove", handleTouchMove, { passive: true });
     }
     canvas.addEventListener("touchend", handleInteractionEnd);
