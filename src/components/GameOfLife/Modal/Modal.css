@@ -17,7 +17,7 @@
   padding: 1rem;
   border-radius: 1rem;
   position: relative;
-  max-width: 60vw;
+  max-width: 90vw;
   max-height: 80vh;
   overflow: auto;
   backdrop-filter: blur(8px);
@@ -51,4 +51,11 @@
 
 .modal-close:hover {
   background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Media query for mobile devices */
+@media screen and (min-width: 768px) {
+  .modal-content {
+    max-width: 60vw;
+  }
 }
