@@ -49,7 +49,7 @@ export default function Grid({
     uiHideTimeoutRef.current = setTimeout(() => {
       setUiActive(false);
       setUiActivated(false);
-    }, 2000);
+    }, 1000);
   }, [isGameRunning, setUiActivated]);
 
   // When game running state changes, update UI visibility

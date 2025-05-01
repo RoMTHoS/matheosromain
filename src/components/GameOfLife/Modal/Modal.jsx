@@ -1,6 +1,6 @@
 import "./Modal.css";
 
-const Modal = ({ isOpen, onClose, children }) => {
+const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   const handleOverlayClick = (e) => {
@@ -13,9 +13,12 @@ const Modal = ({ isOpen, onClose, children }) => {
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content">
-        <button className="modal-close" onClick={onClose}>
-          ×
-        </button>
+        <div className="modal-header">
+          <h2 className="modal-title">{title}</h2>
+          <button className="modal-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
         {children}
       </div>
     </div>

@@ -363,7 +363,11 @@ export default function GameOfLife() {
         setUiActivated={setUiActive}
       />
 
-      <Modal isOpen={showTools} onClose={() => setShowTools(false)}>
+      <Modal
+        isOpen={showTools}
+        onClose={() => setShowTools(false)}
+        title={"Game Tools"}
+      >
         <GameTools
           onImageProcessed={(processedGrid) => {
             handleImageProcessed(processedGrid);
@@ -375,6 +379,7 @@ export default function GameOfLife() {
           gridRows={grid.length || 0}
           patterns={golPatterns}
           onPatternSelect={loadPattern}
+          onClose={() => setShowTools(false)}
         />
       </Modal>
     </div>

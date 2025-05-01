@@ -3,12 +3,32 @@
   max-width: 650px;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  position: relative;
 }
 
-.tools-title {
+.game-tools-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.close-button {
+  background: none;
+  border: none;
   font-size: 1.5rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
+  cursor: pointer;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background-color: #f0f0f0;
 }
 
 .tools-section {
@@ -25,7 +45,7 @@
 
 h3 {
   font-size: 1.1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .cursor-controls {
@@ -34,9 +54,8 @@ h3 {
 
 .cursor-controls-buttons {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   flex: 1;
-  margin: 0 1rem;
 }
 
 .cursor-button {
@@ -94,7 +113,8 @@ h3 {
   transition: all 0.2s;
 }
 
-.pattern-button:hover {
+.pattern-button:hover,
+.confirm-button:hover {
   background-color: #242424;
   color: white;
 }
@@ -109,4 +129,14 @@ h3 {
   font-size: 0.8rem;
   color: #666;
   margin-top: 0.5rem;
+}
+
+/* Styles for text input */
+.text-input {
+  padding: 0.5rem;
+  border: 1px solid #242424;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  resize: vertical;
 }

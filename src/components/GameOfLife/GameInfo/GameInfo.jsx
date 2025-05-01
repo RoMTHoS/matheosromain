@@ -29,10 +29,12 @@ const GameInfo = ({ generation }) => {
       </div>
 
       {/* Game of Life Rules Modal */}
-      <Modal isOpen={infoModalIsOpen} onClose={closeInfoModal}>
+      <Modal
+        isOpen={infoModalIsOpen}
+        onClose={closeInfoModal}
+        title={"Conway's Game of Life"}
+      >
         <div className="game-rules-container">
-          <h2>Conway's Game of Life</h2>
-
           <p>
             Conway's Game of Life is a cellular automaton devised by
             mathematician John Conway in 1970. It's a zero-player game, meaning

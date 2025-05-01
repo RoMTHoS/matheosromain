@@ -305,9 +305,16 @@ const GameTools = ({
   gridRows,
   patterns,
   onPatternSelect,
+  onClose, // Add an onClose prop to close the modal
 }) => {
   const [customText, setCustomText] = useState("");
   const [textError, setTextError] = useState("");
+
+  // Handle pattern selection and close modal
+  const handlePatternSelect = (pattern) => {
+    onPatternSelect(pattern);
+    onClose(); // Close the modal after selecting a pattern
+  };
 
   const handleTextSubmit = (e) => {
     e.preventDefault();
@@ -332,81 +339,85 @@ const GameTools = ({
     // If valid pattern was generated, load it
     if (textPattern.length > 0 && textPattern[0].length > 0) {
       onPatternSelect(textPattern);
+      onClose(); // Close the modal after generating text pattern
     }
-
-    console.log(JSON.stringify(textPattern));
   };
 
   return (
     <div className="game-tools">
-      <h2 className="tools-title">Game Tools</h2>
+      <div className="game-tools-content">
+        <div className="tools-section">
+          <div className="tools-section-content">
+            <h3>Upload an image and make it alive</h3>
+            <ImageProcessor
+              onImageProcessed={(processedImage) => {
+                onImageProcessed(processedImage);
+                onClose(); // Close modal after image is processed
+              }}
+              gridColumns={gridColumns}
+              gridRows={gridRows}
+            />
+          </div>
 
-      <div className="tools-section">
-        <div className="tools-section-content">
-          <h3>Upload an image and make it alive</h3>
-          <ImageProcessor
-            onImageProcessed={onImageProcessed}
-            gridColumns={gridColumns}
-            gridRows={gridRows}
-          />
-        </div>
-
-        <div className="cursor-controls tools-section-content">
-          <h3>Cursor Size</h3>
-          <div className="cursor-controls-buttons">
-            <button
-              onClick={() => onCursorSizeChange(Math.max(1, cursorSize - 2))}
-              className="cursor-button"
-              disabled={cursorSize <= 1}
-            >
-              -
-            </button>
-            <span className="cursor-value">{cursorSize}</span>
-            <button
-              onClick={() => onCursorSizeChange(cursorSize + 2)}
-              className="cursor-button"
-            >
-              +
-            </button>
+          <div className="cursor-controls tools-section-content">
+            <h3>Cursor Size</h3>
+            <div className="cursor-controls-buttons">
+              <button
+                onClick={() => onCursorSizeChange(Math.max(1, cursorSize - 2))}
+                className="cursor-button"
+                disabled={cursorSize <= 1}
+              >
+                -
+              </button>
+              <span className="cursor-value">{cursorSize}</span>
+              <button
+                onClick={() => onCursorSizeChange(cursorSize + 2)}
+                className="cursor-button"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="tools-section-content">
-        <h3>Bring any text to life</h3>
-        <textarea
-          value={customText}
-          onChange={(e) => setCustomText(e.target.value)}
-          placeholder=" Enter text..."
-          className="text-input"
-          rows={3}
-        />
-        {textError && <div className="text-error">{textError}</div>}
-      </div>
+        <div className="tools-section-content">
+          <h3>Bring any text to life</h3>
+          <textarea
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value)}
+            placeholder=" Enter text..."
+            className="text-input"
+            rows={3}
+          />
+          {textError && <div className="text-error">{textError}</div>}
+          <button onClick={handleTextSubmit} className="confirm-button">
+            Generate Pattern From Text
+          </button>
+        </div>
 
-      <button onClick={handleTextSubmit} className="confirm-button">
-        Generate Pattern From Text
-      </button>
-      <br></br>
-      <div className="tools-section-content">
-        <h3>Game of Life famous patterns</h3>
-        <div className="pattern-selector">
-          {Object.entries(patterns).map(([family, familyPatterns]) => (
-            <div key={family} className="pattern-family">
-              <p className="family-name">{family}</p>
-              <div className="family-patterns">
-                {Object.keys(familyPatterns).map((patternName) => (
-                  <button
-                    key={patternName}
-                    onClick={() => onPatternSelect(familyPatterns[patternName])}
-                    className="pattern-button"
-                  >
-                    {patternName}
-                  </button>
-                ))}
+        <br></br>
+        <div className="tools-section-content">
+          <h3>Game of Life famous patterns</h3>
+          <div className="pattern-selector">
+            {Object.entries(patterns).map(([family, familyPatterns]) => (
+              <div key={family} className="pattern-family">
+                <p className="family-name">{family}</p>
+                <div className="family-patterns">
+                  {Object.keys(familyPatterns).map((patternName) => (
+                    <button
+                      key={patternName}
+                      onClick={() =>
+                        handlePatternSelect(familyPatterns[patternName])
+                      }
+                      className="pattern-button"
+                    >
+                      {patternName}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
