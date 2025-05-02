@@ -34,4 +34,4 @@ In my version, I had some feature to play with it.
 
 - Enjoy drawing random shape
 
-# Go to matheosromain.dev to try them ! 
+**Go to matheosromain.dev to try them !**
