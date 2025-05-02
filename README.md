@@ -1,4 +1,4 @@
-# Game od Life portfolio
+# Game of Life portfolio
 
 ![GOL_Github-2025-05-02_09 46-ezgif com-optimize](https://github.com/user-attachments/assets/7813e9bb-8fe5-4900-a8e4-fc6e9b53cf3c)
 
@@ -16,32 +16,22 @@ The analogies of the Game of Life with the development, decline, and alterations
 - Death by underpopuplation : A live cell with fewer than 2 live neighbors dies.
 - Death bu overpopulation : A live cell with more than 3 live neighbors dies.
 
+# Patterns :
 
-          <h3>Patterns</h3>
-          <p>Various patterns emerge from these simple rules:</p>
-          <ul>
-            <li>
-              <strong>Still lifes:</strong> Patterns that don't change (e.g.,
-              Block, Beehive)
-            </li>
-            <li>
-              <strong>Oscillators:</strong> Patterns that repeat (e.g., Blinker,
-              Toad)
-            </li>
-            <li>
-              <strong>Spaceships:</strong> Patterns that move across the grid
-              (e.g., Glider)
-            </li>
-          </ul>
-          <p>
-            Several pre-made patterns are available from the tools menu for you
-            to experiment with.
-          </p>
-          <br></br>
-          <p>
-            The Game of Life demonstrates how complex patterns can emerge from
-            simple rules, making it a fascinating example of emergence and
-            self-organization.
-          </p>
-          <br></br>
-          <p>Despite its very simple rules, it is Turing-complete.</p>
+Various patterns emerge from these simple rules. You can discover some on them on my portfolio. 
+
+The games od Life demonstrates how complex patterns can emerge from dimple rules, making it a fascinating example of emergence and self-organization. 
+
+Despite its very simple rules, it is Turing complete. 
+
+# Advanced features
+
+In my version, I had some feature to play with it. 
+
+- Upload an image to make it alive
+
+- Bring any text to life 
+
+- Enjoy drawing random shape
+
+# Go to matheosromain.dev to try them ! 
